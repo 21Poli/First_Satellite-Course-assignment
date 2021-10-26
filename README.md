@@ -1,1 +1,1 @@
-# First_Satellite-Course-assignment
+# First_Satellite-Course

@@ -1,0 +1,40 @@
+function [xk,fk,k]=DFP(x0,ess)
+%目标函数f，具有最优解x*=[0 0],f(x*)=400
+syms x1 x2 t;
+f=100*(2*x1^2+2)^2+x2^2;
+%构造目标函数f的梯度函数
+fx=diff(f,x1);
+fy=diff(f,x2);
+gf=[fx,fy];
+%初始点的梯度和函数值，赋值
+xk=x0;
+fk=subs(f,[x1 x2],x0);
+gk=subs(gf,[x1 x2],x0);
+Hk=eye(2);
+k=0;
+%进入迭代循环
+while(norm(gk)>ess)&&(k<15) %迭代终止条件
+    %确定搜索方向，先是确定方向，再是确定每一步走多少，方向随着H的变化而变化
+    dk=-Hk*gk';
+    %确定下一点
+    xk=xk+t*dk';%此时t是符号变量，也就是参数，代求解的参数
+    f_t=subs(f,[x1 x2],xk);%构造一元搜索的函数，只有t一个变量了
+    df_t=diff(f_t,t);
+    res=solve(df_t);%由一维搜索找到最优步长  
+    tk=res(1);  %可能有好几个值
+if (tk~=0 )        
+    tk=double(tk);
+else
+    break; 
+end
+ %计算下一点的函数值和梯度
+    xk=subs(xk,t,tk);%因为这里xk是含参数的，可以带入求值
+    fk=subs(f,[x1 x2],xk);
+    gk0=gk;
+    gk=subs(gf,[x1 x2],xk);
+    %DPF修正公式
+    yk=gk-gk0;
+    sk=tk*dk';
+    Hk=Hk-(Hk*yk'*yk*Hk)/(yk*Hk*yk')+sk'*sk/(yk*sk');  
+    k=k+1;
+end
